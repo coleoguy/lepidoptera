@@ -1,0 +1,32 @@
+library(diversitree)
+
+t <- read.tree('aug-butter-newick.tre')
+dd <- read.table('clean-me.csv')
+
+#set up full model
+lik.102 <- make.musse.multitrait(t, dd, sampling.f=0.066, depth=c(1,0,2), strict=FALSE)
+p <- starting.point.musse.multitrait(t, lik.102)
+
+#set up a model in which lambdaH and lambdaL are free to vary, but there is
+#no interaction between those parameters. Also we need to allow the 
+#lability character to influence the rate of range size evolution, 
+# but not allow range size to influence the lability character
+
+#lik.202.L <- constrain(lik.202, qH01.L ~ qH01.0*qH10.L/qH10.0)
+lik.102.L <- constrain(lik.102, qH01.L  ~ qH01.0*qH10.L/qH10.0, qL01.H ~0, qL10.H ~0)
+#lik.102.H <- constrain(lik.102, qH01.L  ~ qH01.0*qH10.L/qH10.0, qH01.L ~0, qH10.L ~0)
+
+
+#Now set up a model in which we take away the effect of lability on speciation
+# but leave the effect of host range
+
+lik.102.L0 <- constrain(lik.102.L, lambdaL ~ 0)
+
+#find ml estimates
+fit.102.L <- find.mle(lik.102.L, p[argnames(lik.102.L)])
+fit.102.L0 <- find.mle(lik.102.L0, p[argnames(lik.102.L0)])
+
+
+
+
+

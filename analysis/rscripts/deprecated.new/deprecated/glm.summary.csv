@@ -1,0 +1,9 @@
+Interaction,Slope,p-value
+Karyotype : specialist,0.0607749531,0.013
+Karyotype : generalist,0.0583439954,0.021
+Census population size : specialist,0.0000000135,0.104
+Census population size : generalist,0.0000000024,0.456
+Range : specialist,0.0000000396,0.302
+Range : generalist,0.0000000080,0.692
+Bodysize (mm) : specialist,-0.0373504134,0.008
+Bodysize (mm) : generalist,-0.0409746753,0.009

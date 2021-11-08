@@ -1,0 +1,13 @@
+One small project would be to simply apply our split rate model to the data set that 
+Otto and Hardy used.  Do species with restricted feeding show higher rates of chromosome
+evolution?  Another option would be to get together all the data that we can here is
+a good start on it.  Then bounce this data through phylota and make the biggest tree 
+that we can for lepidoptera chromosome number.
+
+If we went that route then we could do tests like:
+1) is there general rate variation
+2) is there evidence for polyploidization
+3) does being XO lead to higher rate of chrom num reduction?
+
+4) this would be natural chapter then chapter on diptera and chapter on XXX and synthesis
+as well.

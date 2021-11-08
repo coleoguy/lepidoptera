@@ -1,0 +1,144 @@
+library(diversitree)
+#library(geiger)
+
+#load('musse-tree.Rda')
+
+
+parStack <- function(fit){
+    this.par <- fit$par 
+    return(this.par)
+    }
+    
+likStack <- function(fit){
+    this.lik <- fit$lnLik
+    return(this.lik)
+    }
+    
+parMeans <- function(par.stack){
+    pardf <- data.frame(matrix(unlist(par.stack), nrow=100, byrow=T))
+    colnames(pardf) <- names(par.stack[[1]])
+    par.means <- colMeans(pardf)
+    return(par.means)
+    }
+
+
+trees <- read.tree('Heliconiini-100.tre')
+#load('musse-DPD.Rda')
+md <- read.table('Heliconiini-host_breadth-dispersiveness.csv')
+
+models.1.R <- list()
+models.1.D <- list()
+models.1 <- list()
+models.2 <- list()
+
+for (i in 1:100){
+    print(i)
+    #phy <- trees[[i]]
+    #nc <- name.check(phy, md)
+    #t <- drop.tip(phy, nc$Tree.not.data)
+    t <- trees[[i]]
+    #rescale
+    bt <- branching.times(t)
+    root.height <- bt[[1]]
+    t$edge.length <- t$edge.length * 13.7 / root.height
+    lik.0 <- make.musse.multitrait(t, md, depth=0, sampling.f=0.29)
+    p.0 <- c(starting.point.bd(t), rep(.1, 4))
+    names(p.0) <- argnames(lik.0)
+    fit.0 <- find.mle(lik.0, p.0)
+    
+    lik.1 <- make.musse.multitrait(t, md, depth=c(1,0,0), sampling.f=0.29)
+    p.1 <- starting.point.musse.multitrait(t, lik.1)
+    p.1[names(coef(fit.0))] <- coef(fit.0)
+    fit.1 <- find.mle(lik.1, p.1)
+    models.1 <- c(models.1, list(fit.1))
+    
+    lik.1.R <- constrain(lik.1, lambdaR ~ 0)
+    p <- starting.point.musse.multitrait(t, lik.1.R)
+    p[names(coef(fit.0))] <- coef(fit.0)
+    fit.1.R <- find.mle(lik.1.R, p)
+    models.1.R <- c(models.1.R, list(fit.1.R))
+    
+    lik.1.D <- constrain(lik.1, lambdaD ~ 0)
+    p <- starting.point.musse.multitrait(t, lik.1.D)
+    p[names(coef(fit.0))] <- coef(fit.0)
+    fit.1.D <- find.mle(lik.1.D, p)
+    models.1.D <- c(models.1.D, list(fit.1.D))
+    
+    lik.2 <- make.musse.multitrait(t, md, depth=c(2,0,0), sampling.f=0.29)
+    p.2 <- starting.point.musse.multitrait(t, lik.2)
+    p.2[names(coef(fit.1))] <- coef(fit.1)
+    fit.2 <- find.mle(lik.2, p.2)
+    models.2 <- c(models.2, list(fit.2))
+    }
+
+p.values.D <- vector()
+for (i in 1:100){
+    this.lrt <- anova(models.1[[i]], models.1.D[[i]])
+    this.p <- this.lrt$"Pr(>|Chi|)"[[2]]
+    p.values.D <- c(p.values.D, this.p)
+    }
+    
+p.values.R <- vector()
+for (i in 1:100){
+    this.lrt <- anova(models.1[[i]], models.1.R[[i]])
+    this.p <- this.lrt$"Pr(>|Chi|)"[[2]]
+    p.values.R <- c(p.values.R, this.p)
+    }
+    
+p.values.2 <- vector()
+for (i in 1:100){
+    this.lrt <- anova(models.2[[i]], models.1[[i]])
+    this.p <- this.lrt$"Pr(>|Chi|)"[[2]]
+    p.values.2 <- c(p.values.2, this.p)
+    }
+    
+p.values.2D <- vector()
+for (i in 1:100){
+    this.lrt <- anova(models.2[[i]], models.1.D[[i]])
+    this.p <- this.lrt$"Pr(>|Chi|)"[[2]]
+    p.values.2D <- c(p.values.2D, this.p)
+    }
+    
+p.values.2R <- vector()
+for (i in 1:100){
+    this.lrt <- anova(models.2[[i]], models.1.R[[i]])
+    this.p <- this.lrt$"Pr(>|Chi|)"[[2]]
+    p.values.2R <- c(p.values.2R, this.p)
+    }
+    
+    
+pars.1.R <- lapply(models.1.R, parStack)
+pars.1.R.mean <- parMeans(pars.1.R)
+ln.1.R <- lapply(models.1.R, likStack)
+
+pars.1.D <- lapply(models.1.D, parStack)
+pars.1.D.mean <- parMeans(pars.1.D)
+ln.1.D <- lapply(models.1.D, likStack)
+
+pars.1 <- lapply(models.1, parStack)
+pars.1.mean <- parMeans(pars.1)
+ln.1 <- lapply(models.1, likStack)
+
+pars.2 <- lapply(models.2, parStack)
+pars.2.mean <- parMeans(pars.2)
+ln.2 <- lapply(models.2, likStack)
+
+median.p.D <- median(as.numeric(p.values.D))
+sig.ps.D <- p.values.D[p.values.D <= 0.05]
+sig.p.D.freq <- length(sig.ps.D) / length(p.values.D)
+
+median.p.R <- median(as.numeric(p.values.R))
+sig.ps.R <- p.values.R[p.values.R <= 0.05]
+sig.p.R.freq <- length(sig.ps.R) / length(p.values.R)
+
+median.p.2 <- median(as.numeric(p.values.2))
+sig.ps.2 <- p.values.2[p.values.2 <= 0.05]
+sig.p.2.freq <- length(sig.ps.2) / length(p.values.2)
+
+median.p.2R <- median(as.numeric(p.values.2R))
+sig.ps.2R <- p.values.2R[p.values.2R <= 0.05]
+sig.p.2R.freq <- length(sig.ps.2R) / length(p.values.2R)
+
+median.p.2D <- median(as.numeric(p.values.2D))
+sig.ps.2D <- p.values.2D[p.values.2D <= 0.05]
+sig.p.2D.freq <- length(sig.ps.2D) / length(p.values.2D)

@@ -1,0 +1,11 @@
+parameter,Mean in generalists,Mean in specialists,p-value
+Number of Host species,26.7,7.944,0.007
+Body size (mm),20.25,22.043,0.44
+Egg volume (mm3),0.164,0.394,0.051
+Range (km2),8190601.65,3847321.389,0.005
+Density,1.648,2.581,0.242
+Karyotype,27.105,28.393,0.424
+Karyotype - outliers removed,27.778,29.577,0.047
+Genome size,433.089,434.494,0.983
+Neutral genome diversity,0.017,0.018,0.623
+Nonsynonimous diversity,0.001,0.001,0.864

@@ -1,0 +1,70 @@
+Model type,Parameter,Slope,p-value,p < 0.05
+individual impact,,,,
+,Generalist,-0.014,0.94,N
+,Body size (mm),-0.038,0.01,Y
+,Egg volume (mm3),-0.533,0.07,N
+,Population density,0.021,0.63,N
+,mean chromosome number (n),0.061,0.01,Y
+,[outliers removed] mean chromosome number (n),0.026,0.51,N
+,Genome size (Mb),0.000,0.53,N
+,Census population size,0.000,0.28,N
+,Range (km2),0.000,0.64,N
+individual impact in combination with feeding type,,,,
+m1,Body size (mm),-0.039,0.01,Y
+,Generalist,-0.084,0.65,N
+m2,Egg volume (mm3),-0.612,0.05,N
+,Generalist,-0.155,0.45,N
+m3,Population density,0.021,0.64,N
+,Generalist,0.005,0.98,N
+m4,mean chromosome number (n),0.060,0.02,Y
+,Generalist,-0.055,0.79,N
+m5,[outliers removed] mean chromosome number (n),0.019,0.64,N
+,[outliers removed] Generalist,-0.107,0.63,N
+m6,Genome size (Mb),0.000,0.54,N
+,Generalist,-0.034,0.87,N
+m7,Census population size,0.000,0.28,N
+,Generalist,-0.041,0.84,N
+m8,Range (km2),0.000,0.59,N
+,Generalist,-0.068,0.76,N
+combined effect only,,,,
+m1,Body size (mm) : Specialists,-0.037,0.01,Y
+,Body size (mm) : Generalist,-0.041,0.01,Y
+m2,Egg volume (mm3) : Specialists,-0.530,0.07,N
+,Egg volume (mm3) : Generalist,-0.414,0.65,N
+m3,Population density : Specialists,0.017,0.71,N
+,Population density : Generalist,0.030,0.66,N
+m4,mean chromosome number (n) : Specialists,0.061,0.01,Y
+,mean chromosome number (n) : Generalist,0.058,0.02,Y
+m5,[outliers removed] mean chromosome number (n) : [outliers removed] Specialist,0.022,0.58,N
+,[outliers removed] mean chromosome number (n) : [outliers removed] Generalist,0.018,0.67,N
+m6,Genome size (Mb) : Specialists,0.000,0.47,N
+,Genome size (Mb) : Generalist,0.000,0.63,N
+m7,Census population size : Specialists,0.000,0.10,N
+,Census population size : Generalist,0.000,0.46,N
+m8,Rang (km2) : specialist,0.000,0.30,N
+,Range (km2) : Generalist,0.000,0.69,N
+Individual and combined effects,,,,
+m1,Body size (mm),-0.039,0.03,Y
+,Generalist,-0.084,0.89,N
+,Body size (mm) : Generalist,0.000,1.00,N
+m2,Egg volume (mm3),-0.693,0.03,Y
+,Generalist,-0.383,0.21,N
+,Egg volume (mm3) : Generalist,1.282,0.31,N
+m3,Population density,0.014,0.80,N
+,Generalist,-0.034,0.90,N
+,Population density : Generalist,0.020,0.83,N
+m4,mean chromosome number (n),0.071,0.05,Y
+,Generalist,0.537,0.69,N
+,mean chromosome number (n) : Generalist,-0.021,0.66,N
+m5,[outliers removed] mean chromosome number (n),0.113,0.28,N
+,[outliers removed] Generalist,3.150,0.35,N
+,[outliers removed] mean chromosome number (n) : [outliers removed] Generalist,-0.111,0.33,N
+m6,Genome size (Mb),-0.001,0.14,N
+,Generalist,-0.719,0.18,N
+,Genome size (Mb) : Generalist,0.002,0.16,N
+m7,Census population size,0.000,0.09,N
+,Generalist,0.139,0.55,N
+,Census population size : Generalist,0.000,0.16,N
+m8,Range (km2),0.000,0.24,N
+,Generalist,0.207,0.55,N
+,Range (km2) : Generalist,0.000,0.29,N
