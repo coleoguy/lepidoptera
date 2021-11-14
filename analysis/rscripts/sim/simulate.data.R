@@ -27,11 +27,10 @@ rm(tree, tree.set, i, j, taxa)
 
 # Simulate chromosome and binary trait data ---------------------
 # 100 datasets for every situation
-# 1) no signal with binary trait no violation
-# 2) signal with binary trait no violation
-# 3) no signal with binary trait single tip violation
-# 4) signal with binary trait single tip violation
-# 5) one size of tree but increase number of tip violators
+# 1) signal with binary trait no violation
+# 2) no signal with binary trait single tip violation
+# 3) signal with binary trait single tip violation
+# 4) one size of tree but increase number of tip violators
 #    up to 10% of tips
 
 # for sims with signal rates ratio will be 5 to replicate 2019 paper
@@ -39,7 +38,7 @@ rm(tree, tree.set, i, j, taxa)
 # unit
 
 # this will contain the five datasets described above
-chrom.traits <- bin.traits <- list()
+chrom.traits <- bin.traits <- c()
 
 # cycle through tree sizes
 for(i in 1:5){
@@ -47,7 +46,6 @@ for(i in 1:5){
   for(j in 1:100){
     check <- F
     while(check==F){
-      total.counter <- total.counter + 1
       z <- simChrom(trees[[i]][[j]], 
                     pars=c(.75, 1*.75, .75, 1*.75,
                            0,   0,  0,  0, .5,  .5, 10,  0),
@@ -57,8 +55,9 @@ for(i in 1:5){
         check <- T
       }
     }
-    bin.traits
-
+    bin.traits <- cbind(bin.traits, z[[1]])
+    chrom.traits <- cbind(chrom.traits, z[[2]])
+    
   }
   
   # condition 2
