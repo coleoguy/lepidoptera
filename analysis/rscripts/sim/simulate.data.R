@@ -236,7 +236,7 @@ for(i in 1:5){
 # Simulate chromosome and binary trait data ---------------------
 
 # save data
-save.image("../results/simulate.data.RData")
+save.image("simulate.data.RData")
 
 
 
