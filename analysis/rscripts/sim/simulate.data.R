@@ -25,7 +25,7 @@ for(i in 1:length(taxa)){
 # name each set in trees
 names(trees) <- taxa
 # remove unwanted objects
-rm(tree, tree.set, i, j, taxa)
+rm(tree, tree.set, i, j)
 # Build 100 trees of sizes 50 to 250 species --------------------
 
 
@@ -58,6 +58,9 @@ names(chrom.traits.4) <- names(bin.traits.4) <- names(trees)
 names(chrom.traits.5) <- names(bin.traits.5) <- names(trees)
 names(chrom.traits.5) <- names(bin.traits.5) <-  c(2,4,6,8,10)
 
+# set the rates ratio
+rr <- 5
+
 # cycle through tree sizes
 for(i in 1:5){
   # condition 1
@@ -65,6 +68,7 @@ for(i in 1:5){
   for(j in 1:100){
     check <- F
     while(check==F){
+      z <- NULL
       z <- simChrom(trees[[i]][[j]], 
                     pars=c(.75,     # gains at state 0
                            1*.75,   # gains at state 1
@@ -79,8 +83,8 @@ for(i in 1:5){
                            10,      # root chromosome number
                            0),      # root state
                     limits = c(1, 100), model = "ChromPlus")
-      if(sum(z$binary.state) >= (taxa[i]*0.25) &
-         sum(z$binary.state) <= (taxa[i]*0.50)){
+      if(sum(z$binary.state) >= (taxa[i]*0.10) &
+         sum(z$binary.state) <= (taxa[i]*0.90)){
         check <- T
       }
     }
@@ -94,11 +98,12 @@ for(i in 1:5){
   for(j in 1:100){
     check <- F
     while(check==F){
+      z <- NULL
       z <- simChrom(trees[[i]][[j]], 
                     pars=c(.75,     # gains at state 0
-                           5*.75,   # gains at state 1
+                           rr*.75,   # gains at state 1
                            .75,     # loss at state 0
-                           5*.75,   # loss at state 1
+                           rr*.75,   # loss at state 1
                            0,       # demiploidy at state 0
                            0,       # demiploidy at state 1
                            0,       # polyploidy at state 0
@@ -108,8 +113,8 @@ for(i in 1:5){
                            10,      # root chromosome number
                            0),      # root state
                     limits = c(1, 100), model = "ChromPlus")
-      if(sum(z$binary.state) >= (taxa[i]*0.25) &
-         sum(z$binary.state) <= (taxa[i]*0.50)){
+      if(sum(z$binary.state) >= (taxa[i]*0.10) &
+         sum(z$binary.state) <= (taxa[i]*0.90)){
         check <- T
       }
     }
@@ -124,13 +129,14 @@ for(i in 1:5){
   for(j in 1:100){
     check <- F
     while(check==F){
+      z <- NULL
       # randompy sample a tip 
       rTip <- NULL
       rTip <- sample(Ntip(trees[[i]][[j]]),1)
       # extend the edge of the tip
       sim.tree <- NULL
       sim.tree <- trees[[i]][[j]]
-      sim.tree$edge.length[which(sim.tree$edge[,2] == rTip)] <- sim.tree$edge.length[which(sim.tree$edge[,2] == rTip)] * 2
+      sim.tree$edge.length[which(sim.tree$edge[,2] == rTip)] <- sim.tree$edge.length[which(sim.tree$edge[,2] == rTip)] + 1
       z <- simChrom(trees[[i]][[j]], 
                     pars=c(.75,     # gains at state 0
                            1*.75,   # gains at state 1
@@ -145,8 +151,8 @@ for(i in 1:5){
                            10,      # root chromosome number
                            0),      # root state
                     limits = c(1, 100), model = "ChromPlus")
-      if(sum(z$binary.state) >= (taxa[i]*0.25) &
-         sum(z$binary.state) <= (taxa[i]*0.50)){
+      if(sum(z$binary.state) >= (taxa[i]*0.10) &
+         sum(z$binary.state) <= (taxa[i]*0.90)){
         check <- T
       }
     }
@@ -160,18 +166,19 @@ for(i in 1:5){
   for(j in 1:100){
     check <- F
     while(check==F){
+      z <- NULL
       # randompy sample a tip 
       rTip <- NULL
       rTip <- sample(Ntip(trees[[i]][[j]]),1)
       # extend the edge of the tip
       sim.tree <- NULL
       sim.tree <- trees[[i]][[j]]
-      sim.tree$edge.length[which(sim.tree$edge[,2] == rTip)] <- sim.tree$edge.length[which(sim.tree$edge[,2] == rTip)] * 2
+      sim.tree$edge.length[which(sim.tree$edge[,2] == rTip)] <- sim.tree$edge.length[which(sim.tree$edge[,2] == rTip)] + 1
       z <- simChrom(sim.tree, 
                     pars=c(.75,     # gains at state 0
-                           5*.75,   # gains at state 1
+                           rr*.75,   # gains at state 1
                            .75,     # loss at state 0
-                           5*.75,   # loss at state 1
+                           rr*.75,   # loss at state 1
                            0,       # demiploidy at state 0
                            0,       # demiploidy at state 1
                            0,       # polyploidy at state 0
@@ -181,8 +188,8 @@ for(i in 1:5){
                            10,      # root chromosome number
                            0),      # root state
                     limits = c(1, 100), model = "ChromPlus")
-      if(sum(z$binary.state) >= (taxa[i]*0.25) &
-         sum(z$binary.state) <= (taxa[i]*0.50)){
+      if(sum(z$binary.state) >= (taxa[i]*0.10) &
+         sum(z$binary.state) <= (taxa[i]*0.90)){
         check <- T
       }
     }
@@ -199,20 +206,21 @@ for(i in 1:5){
 #    up to 10% of tips
 for(i in 1:5){
   for(j in 1:100){
+    z <- NULL
     # randompy sample a tip 
     rTip <- NULL
     rTip <- sample(Ntip(trees[[5]][[j]]),Ntip(trees[[5]][[j]])*i*0.01*2,replace = F)
     # extend the edge of the tip
     sim.tree <- NULL
     sim.tree <- trees[[5]][[j]]
-    sim.tree$edge.length[which(sim.tree$edge[,2] %in% rTip)] <- sim.tree$edge.length[which(sim.tree$edge[,2] %in% rTip)] * 2
+    sim.tree$edge.length[which(sim.tree$edge[,2] %in% rTip)] <- sim.tree$edge.length[which(sim.tree$edge[,2] %in% rTip)] + 1
     check <- F
     while(check==F){
-      z <- simChrom(trees[[i]][[j]], 
+      z <- simChrom(trees[[5]][[j]], 
                     pars=c(.75,     # gains at state 0
-                           5*.75,   # gains at state 1
+                           rr*.75,   # gains at state 1
                            .75,     # loss at state 0
-                           5*.75,   # loss at state 1
+                           rr*.75,   # loss at state 1
                            0,       # demiploidy at state 0
                            0,       # demiploidy at state 1
                            0,       # polyploidy at state 0
@@ -222,8 +230,8 @@ for(i in 1:5){
                            10,      # root chromosome number
                            0),      # root state
                     limits = c(1, 100), model = "ChromPlus")
-      if(sum(z$binary.state) >= (taxa[i]*0.25) &
-         sum(z$binary.state) <= (taxa[i]*0.50)){
+      if(sum(z$binary.state) >= (taxa[i]*0.10) &
+         sum(z$binary.state) <= (taxa[i]*0.90)){
         check <- T
       }
     }
