@@ -8,10 +8,10 @@ library(stringr)
 
 #### calculate significance ####
 # get the list of files
-files <- dir()
+files <- dir("../results/post.burnin/")
 # only keep files that we want
 files <- files[grep("post.burnin", files)]
-files <- files[grep(paste("condition.1", sep = ""), files)]
+files <- files[grep(paste("condition.5", sep = ""), files)]
 # container to store p values
 Sigtab <- as.data.frame(matrix(data = NA,
                                nrow = 15,
@@ -21,7 +21,7 @@ colnames(Sigtab) <- c("condition", "ntip","rr", "FissionSignificance", "FusionSi
 pb.seq <- seq(from = 1, to = 5000, by = 50)
 # read in data
 for(i in 1:length(files)){
-  dat <- read.csv(files[i])
+  dat <- read.csv(paste("../results/post.burnin/", files[i], sep = ""))
   # make tables to hold rates in each simulation
   tab <- as.data.frame(matrix(data = NA, nrow = 100, ncol = 3))
   # label columns
@@ -102,10 +102,10 @@ rm(list = ls()[-c(which(ls() == "Sigtab"))])
 
 #### calculate power ####
 # get the list of files
-files <- dir()
+files <- dir("../results/post.burnin/")
 # only keep files that we want
 files <- files[grep("post.burnin", files)]
-files <- files[grep(paste("condition.2", sep = ""), files)]
+files <- files[grep(paste("condition.6", sep = ""), files)]
 # container to store p values
 Ptab <- as.data.frame(matrix(data = NA,
                              nrow = 15,
@@ -115,7 +115,7 @@ colnames(Ptab) <- c("condition", "ntip","rr", "FissionSignificance", "FusionSign
 pb.seq <- seq(from = 1, to = 5000, by = 50)
 # read in data
 for(i in 1:length(files)){
-  dat <- read.csv(files[i])
+  dat <- read.csv(paste("../results/post.burnin/", files[i], sep = ""))
   # make tables to hold rates in each simulation
   tab <- as.data.frame(matrix(data = NA, nrow = 100, ncol = 3))
   # label columns
@@ -202,15 +202,15 @@ rm(list = ls()[-c(which(ls() %in% c("Sigtab", "Ptab")))])
   ## Type I error rate Fission
   plot(x = NULL,
        y = NULL,
-       xlim = c(50,250),
-       ylim = c(0,0.1),
+       xlim = c(50,250) / 100 * 4,
+       ylim = c(0,0.15),
        ylab = "Type I error rate",
-       xlab = "Number of tips",
+       xlab = "Percentage of tip rate vioators",
        main = "Fission") 
   
   for(i in 1:3){
     # plot condition 2
-    lines(x = Sigtab$ntip[Sigtab$rr == sort(unique(Sigtab$rr))[i]],
+    lines(x = (Sigtab$ntip[Sigtab$rr == sort(unique(Sigtab$rr))[i]] / 100) * 4,
           y = Sigtab$FissionSignificance[Sigtab$rr == sort(unique(Sigtab$rr))[i]],
           pch = 16,
           type = "o", lwd = 2,
@@ -223,15 +223,15 @@ rm(list = ls()[-c(which(ls() %in% c("Sigtab", "Ptab")))])
   ## Type I error rate Fusion
   plot(x = NULL,
        y = NULL,
-       xlim = c(50,250),
-       ylim = c(0,0.1),
+       xlim = c(50,250) / 100 * 4,
+       ylim = c(0,0.15),
        ylab = "Type I error rate",
-       xlab = "Number of tips",
+       xlab = "Percentage of tip rate vioators",
        main = "Fusion") 
   
   for(i in 1:3){
     # plot condition 2
-    lines(x = Sigtab$ntip[Sigtab$rr == sort(unique(Sigtab$rr))[i]],
+    lines(x = (Sigtab$ntip[Sigtab$rr == sort(unique(Sigtab$rr))[i]] / 100) * 4,
           y = Sigtab$FusionSignificance[Sigtab$rr == sort(unique(Sigtab$rr))[i]],
           pch = 16,
           type = "o", lwd = 2,
@@ -244,15 +244,15 @@ rm(list = ls()[-c(which(ls() %in% c("Sigtab", "Ptab")))])
   ## Type I error rate MeanRateCombined
   plot(x = NULL,
        y = NULL,
-       xlim = c(50,250),
-       ylim = c(0,0.1),
+       xlim = c(50,250) / 100 * 4,
+       ylim = c(0,0.15),
        ylab = "Type I error rate",
-       xlab = "Number of tips",
+       xlab = "Percentage of tip rate vioators",
        main = "Combination") 
   
   for(i in 1:3){
     # plot condition 2
-    lines(x = Sigtab$ntip[Sigtab$rr == sort(unique(Sigtab$rr))[i]],
+    lines(x = (Sigtab$ntip[Sigtab$rr == sort(unique(Sigtab$rr))[i]] / 100) * 4,
           y = Sigtab$MeanRateSignificance[Sigtab$rr == sort(unique(Sigtab$rr))[i]],
           pch = 16,
           type = "o", lwd = 2,
@@ -275,14 +275,14 @@ rm(list = ls()[-c(which(ls() %in% c("Sigtab", "Ptab")))])
   ## Type II error rate fission
   plot(x = NULL,
        y = NULL,
-       xlim = c(50,250),
+       xlim = c(50,250) / 100 * 4,
        ylim = c(0,1),
        ylab = "Type II error rate",
-       xlab = "Number of tips") 
+       xlab = "Percentage of tip rate vioators") 
   
   for(i in 1:3){
     # plot condition 2
-    lines(x = Ptab$ntip[Ptab$rr == sort(unique(Ptab$rr))[i]],
+    lines(x = (Ptab$ntip[Ptab$rr == sort(unique(Ptab$rr))[i]] / 100) * 4,
           y = Ptab$FissionSignificance[Ptab$rr == sort(unique(Ptab$rr))[i]],
           pch = 16,
           type = "o", lwd = 2,
@@ -293,14 +293,14 @@ rm(list = ls()[-c(which(ls() %in% c("Sigtab", "Ptab")))])
   ## Type II error rate fusion
   plot(x = NULL,
        y = NULL,
-       xlim = c(50,250),
+       xlim = c(50,250) / 100 * 4,
        ylim = c(0,1),
        ylab = "Type II error rate",
-       xlab = "Number of tips") 
+       xlab = "Percentage of tip rate vioators") 
   
   for(i in 1:3){
     # plot condition 2
-    lines(x = Ptab$ntip[Ptab$rr == sort(unique(Ptab$rr))[i]],
+    lines(x = (Ptab$ntip[Ptab$rr == sort(unique(Ptab$rr))[i]] / 100) * 4,
           y = Ptab$FusionSignificance[Ptab$rr == sort(unique(Ptab$rr))[i]],
           pch = 16,
           type = "o", lwd = 2,
@@ -311,14 +311,14 @@ rm(list = ls()[-c(which(ls() %in% c("Sigtab", "Ptab")))])
   ## Type II error rate MeanRateCombined
   plot(x = NULL,
        y = NULL,
-       xlim = c(50,250),
+       xlim = c(50,250) / 100 * 4,
        ylim = c(0,1),
        ylab = "Type II error rate",
-       xlab = "Number of tips") 
+       xlab = "Percentage of tip rate vioators") 
   
   for(i in 1:3){
     # plot condition 2
-    lines(x = Ptab$ntip[Ptab$rr == sort(unique(Ptab$rr))[i]],
+    lines(x = (Ptab$ntip[Ptab$rr == sort(unique(Ptab$rr))[i]] / 100) * 4,
           y = Ptab$MeanRateSignificance[Ptab$rr == sort(unique(Ptab$rr))[i]],
           pch = 16,
           type = "o", lwd = 2,
