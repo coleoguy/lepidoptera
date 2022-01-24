@@ -105,7 +105,7 @@ rm(list = ls()[-c(which(ls() == "Sigtab"))])
 files <- dir("../results/post.burnin/")
 # only keep files that we want
 files <- files[grep("post.burnin", files)]
-files <- files[grep(paste("condition.3", sep = ""), files)]
+files <- files[grep(paste("condition.4", sep = ""), files)]
 # container to store p values
 Ptab <- as.data.frame(matrix(data = NA,
                              nrow = 15,
@@ -124,7 +124,7 @@ for(i in 1:length(files)){
     # fission
     # calculate HPD interval
     HPD.fis <- HPDinterval(as.mcmc(dat$asc2[pb.seq[j]:(pb.seq[j] + 49)] - dat$asc1[pb.seq[j]:(pb.seq[j] + 49)]))
-    if(HPD.fis[1] < 0 & HPD.fis[2] > 0){
+    if((HPD.fis[1] < 0 & HPD.fis[2] > 0)){
       tab$FissionPassZero[j] <- 0
     }else{
       tab$FissionPassZero[j] <- 1
