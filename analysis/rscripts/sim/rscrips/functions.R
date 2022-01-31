@@ -143,7 +143,8 @@ getPostBurnin <- function(data, burn = NULL){
 
 
 
-# This function will simulate a set of binary characters for a given tree and run MCMC on that ----
+# This function will simulate a set of binary characters 
+# for a given tree and run chromeplus on that 
 simBinMCMC <- function(tree = NULL,
                        chroms = NULL,
                        binary = NULL,
@@ -235,7 +236,7 @@ simBinMCMC <- function(tree = NULL,
                               w = 1,
                               lower = rep(0,length(argnames(con.lik))),
                               print.every=5)
-    # get values for w
+    # get values for w # TODO just do this first time through
     w <- NULL
     w <- diff(sapply(temp[11:20, 2:(length(argnames(con.lik))+1)], quantile, c(.05, .95)))
     # run MCMC
@@ -254,7 +255,7 @@ simBinMCMC <- function(tree = NULL,
   return(results)
 }
 
-# This function will calculate empirical p value ----
+# This function will calculate empirical p value 
 empiricalPcalc <- function(empPostburnin = NULL,
                            simPostburnin = NULL,
                            polyploidy = F,
