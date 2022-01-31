@@ -170,17 +170,25 @@ simBinMCMC <- function(tree = NULL,
   start_time <- as.numeric(Sys.time())
   for(i in 1:nsim){
     print(paste("iteration", i))
-    # simulate binary traits
-    sim.bin <- NULL
-    sim.bin <- sim.character(tree = tree,
-                             pars = tmat,
-                             model = "mkn",
-                             x0 = as.numeric(sample(names(root$pi),
-                                                    1,
-                                                    prob = root$pi))+1)
-    # change simulated binary characters back to zeros and ones
-    sim.bin[sim.bin == 1] <- 0
-    sim.bin[sim.bin == 2] <- 1
+    
+    check <- F
+    while(check == F){
+      # simulate binary traits
+      sim.bin <- NULL
+      sim.bin <- sim.character(tree = tree,
+                               pars = tmat,
+                               model = "mkn",
+                               x0 = as.numeric(sample(names(root$pi),
+                                                      1,
+                                                      prob = root$pi))+1)
+      # change simulated binary characters back to zeros and ones
+      sim.bin[sim.bin == 1] <- 0
+      sim.bin[sim.bin == 2] <- 1
+      if(sum(sim.bin) >= (length(sim.bin)*0.10) &
+         sum(sim.bin) <= (length(sim.bin)*0.90)){
+        check <- T
+      }
+    }
     
     # make the initial data frame
     MCMC.dat <- NULL
@@ -253,9 +261,9 @@ empiricalPcalc <- function(empPostburnin = NULL,
                            nsim = 100,
                            plot = F){
   
-  empMeanASC <- empPostburnin$asc1 - empPostburnin$asc2
-  empMeanDESC <- empPostburnin$desc1 - empPostburnin$desc2
-  empMeanCOMB <- ((empPostburnin$asc1 + empPostburnin$desc1) / 2) - ((empPostburnin$asc2 + empPostburnin$desc2) / 2)
+  empMeanASC <- mean(empPostburnin$asc1 - empPostburnin$asc2)
+  empMeanDESC <-mean(empPostburnin$desc1 - empPostburnin$desc2)
+  empMeanCOMB <- mean(((empPostburnin$asc1 + empPostburnin$desc1) / 2) - ((empPostburnin$asc2 + empPostburnin$desc2) / 2))
   
   if(polyploidy == T){
     empMeanPOL <- empPostburnin$pol1 - empPostburnin$pol2
@@ -287,9 +295,9 @@ empiricalPcalc <- function(empPostburnin = NULL,
       Delta.R$pol[i] <- mean(abs(pbrnPOL1 - pbrnPOL2))
     }  
   }
-  empericalPFission <- sum(Delta.R$asc > abs(empMeanASC))
-  empericalPFusion <- sum(Delta.R$desc > abs(empMeanDESC))
-  empericalPCombined <- sum(Delta.R$comb > abs(empMeanCOMB))
+  empericalPFission <- sum(Delta.R$asc > abs(empMeanASC)) / nsim
+  empericalPFusion <- sum(Delta.R$desc > abs(empMeanDESC)) / nsim
+  empericalPCombined <- sum(Delta.R$comb > abs(empMeanCOMB)) / nsim
   
   print(paste("Emperical P value of Fusions:", empericalPFusion))
   print(paste("Emperical P value of Fissions:", empericalPFission))
@@ -307,11 +315,12 @@ empiricalPcalc <- function(empPostburnin = NULL,
     }
     # fission
     hist(Delta.R$asc,
-         xlab = expression(paste("| ",Delta, "R"[fission]," |")),
+         xlab = expression(paste("| ",Delta, "R"[Fission]," |")),
          main = "",
          breaks = 25,
          cex.lab = 1.5,
-         lwd = 2)
+         lwd = 2,
+         xlim  = c(0, max(c(Delta.R$asc,abs(empMeanASC)))))
     abline(v = mean(abs(empMeanASC)),
            col = "red",
            lwd = 2)
@@ -324,11 +333,12 @@ empiricalPcalc <- function(empPostburnin = NULL,
     
     # fusion
     hist(Delta.R$desc,
-         xlab = expression(paste("| ",Delta, "R"[fusion]," |")),
+         xlab = expression(paste("| ",Delta, "R"[Fusion]," |")),
          main = "",
          breaks = 25,
          cex.lab = 1.5,
-         lwd = 2)
+         lwd = 2,
+         xlim  = c(0, max(c(Delta.R$desc,abs(empMeanDESC)))))
     abline(v = mean(abs(empMeanDESC)),
            col = "red",
            lwd = 2)
@@ -341,11 +351,12 @@ empiricalPcalc <- function(empPostburnin = NULL,
     
     # Combined aneuploidy
     hist(Delta.R$comb,
-         xlab = expression(paste("| ",Delta, "R"[fusion]," |")),
+         xlab = expression(paste("| ",Delta, "R"[Aneuploidy]," |")),
          main = "",
          breaks = 25,
          cex.lab = 1.5,
-         lwd = 2)
+         lwd = 2,
+         xlim  = c(0, max(c(Delta.R$comb,abs(empMeanCOMB)))))
     abline(v = mean(abs(empMeanCOMB)),
            col = "red",
            lwd = 2)
