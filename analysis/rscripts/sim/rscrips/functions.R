@@ -650,7 +650,8 @@ getEmpiricalP <- function(tree = NULL,
                          simMCMC = results,
                          polyploidy = !args.conlik$drop.poly,
                          nsim = nsim,
-                         plot = plot.p)
+                         plot = plot.p,
+                         burn = burn)
   # run time complete script
   end_time_script <- as.numeric(Sys.time())
   print(paste("run time Total =",  round(end_time_script - start_time_script,0), "seconds"))
