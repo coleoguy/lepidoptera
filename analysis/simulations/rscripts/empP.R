@@ -6,7 +6,7 @@ library(chromePlus)
 # load helper functions
 source("functions.R")
 # load data
-load("simData.RData")
+load("../results/simData/simData.RData")
 # make a place holder for emperical data
 empP <- vector(mode = "list", length = 100)
 names(empP) <- paste("tree", 1:100, sep = ".")
@@ -20,7 +20,7 @@ for(i in 1:length(simDat)){ # access conditions
       # get the save file name
       file.name <- paste(cond,ntips,rr,"RData",sep = ".")
       #load results
-      load(file.name)
+      load(paste("../results/simData-MCMC/",file.name, sep = ""))
       for(iiii in 1:length(results)){
         # get post burnin of emperical data
         pbrn <- getPostBurnin(results[[iiii]], burn = 0.5)
@@ -34,8 +34,16 @@ for(i in 1:length(simDat)){ # access conditions
                              plot.p = F)
       }
       print(paste(file.name, "complete"))
-      save(empP, file = paste("empP",file.name,"tree",iiii,"RData", sep = "."))
+      save(empP, file = paste("../results/empP-MCMC/empP",file.name,"tree",iiii,"RData", sep = "."))
+      # remove emp from memory
+      rm(empP)
+      # free unused memory
+      gc()
     }
+    # remove results
+    rm(results)
+    # free unused memory
+    gc()
   }
 }
     
