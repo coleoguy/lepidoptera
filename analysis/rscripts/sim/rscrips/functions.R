@@ -90,9 +90,7 @@ plotlikMCMC <- function(data, burn = NULL){
          xlab = "Generation",
          ylab = "Likelihood")
     abline(v = nrow(data) * burn, col = "red")
-  }
-  
-  if(is.list(data) == T){
+  }else{
     nElements <- length(data)
     rngMin <- rngMax <- vector(mode = "numeric", length = nElements)
     for(i in 1:nElements){
@@ -118,148 +116,26 @@ plotlikMCMC <- function(data, burn = NULL){
 
 # This function will get the post burnin from data ----
 getPostBurnin <- function(data, burn = NULL){
-  if(is.list(data) == T){
+  if(is.data.frame(data) == T){
+    pbrn <- data[((nrow(data)*burn)+1):nrow(data),]
+  }else{
     y <- c()
     y <- data[[1]][((nrow(data[[1]])*burn)+1):nrow(data[[1]]),]
     for(i in 2:length(data)){
       y <- rbind(y,data[[i]][((nrow(data[[1]])*burn)+1):nrow(data[[1]]),])
     }
-    pbrn <- y
-  }
-  if(is.data.frame(data) == T){
-    pbrn <- data[[((nrow(data)*burn)+1):nrow(data),]]
+    pbrn <- y  
   }
   return(pbrn)
 }
 
-# This function will make transision matrix  ----
-# get the transistion matrix
-# tmat <- matrix(data = 0, nrow = 2, ncol = 2)
-# colnames(tmat) <- rownames(tmat) <- c(0,1)
-# # fill tmat
-# tmat[1,2] <- mean(postBurnResults$tran12)
-# tmat[2,1] <- mean(postBurnResults$tran21)
-# diag(tmat) <- -rowSums(tmat)
-
-
-
-# This function will simulate a set of binary characters 
-# for a given tree and run chromeplus on that 
-simBinMCMC <- function(tree = NULL,
-                       chroms = NULL,
-                       binary = NULL,
-                       tmat = NULL,
-                       nsim = NULL,
-                       hyper = T,
-                       polyploidy = F,
-                       verbose = F,
-                       oneway = F,
-                       drop.poly=T,
-                       drop.demi=T,
-                       iter.temp = 20,
-                       iter = 100,
-                       prior = make.prior.exponential(r = .5),
-                       print.every=50){
-  
-  results <- vector(mode = "list", length = nsim)
-  # # get the root probabilities of the binary trait
-  root <- fitMk(tree = tree, 
-                x = binary,
-                fixedQ = tmat,
-                pi = "fitzjohn")
-  # run time
-  start_time <- as.numeric(Sys.time())
-  for(i in 1:nsim){
-    print(paste("iteration", i))
-    
-    check <- F
-    while(check == F){
-      # simulate binary traits
-      sim.bin <- NULL
-      sim.bin <- sim.character(tree = tree,
-                               pars = tmat,
-                               model = "mkn",
-                               x0 = as.numeric(sample(names(root$pi),
-                                                      1,
-                                                      prob = root$pi))+1)
-      # change simulated binary characters back to zeros and ones
-      sim.bin[sim.bin == 1] <- 0
-      sim.bin[sim.bin == 2] <- 1
-      if(sum(sim.bin) >= (length(sim.bin)*0.10) &
-         sum(sim.bin) <= (length(sim.bin)*0.90)){
-        check <- T
-      }
-    }
-    
-    # make the initial data frame
-    MCMC.dat <- NULL
-    MCMC.dat <-  data.frame(species = tree$tip.label,
-                            chroms = chroms,
-                            bin = sim.bin,
-                            stringsAsFactors = F,
-                            row.names = NULL)
-    # get the range of chromosome number
-    rng <- NULL
-    rng <- c(range(MCMC.dat$chroms, na.rm = T)[1] - 1,
-             range(MCMC.dat$chroms, na.rm = T)[2] + 1)
-    # convert the data frame to diversitree usable format
-    chrom.mat <- NULL
-    chrom.mat <- datatoMatrix(x = MCMC.dat,
-                              range = rng,
-                              hyper = T)
-    
-    # make the likelihood function
-    lik <- NULL
-    lik <- make.mkn(tree = tree,
-                    states = chrom.mat,
-                    k = ncol(chrom.mat),
-                    strict = F,
-                    control = list(method="ode"))
-    # constrain the likelihood function
-    con.lik <- NULL
-    con.lik <- constrainMkn(data = chrom.mat,
-                            lik = lik,
-                            hyper = hyper,
-                            polyploidy = polyploidy,
-                            verbose = verbose,
-                            oneway = oneway,
-                            constrain = list(drop.poly=drop.poly,
-                                             drop.demi=drop.demi))
-    
-    # run the initial MCMC to get parameter values for w
-    temp <- NULL
-    temp <- diversitree::mcmc(lik = con.lik,
-                              x.init = runif(min=0, max=1,
-                                             n=length(argnames(con.lik))),
-                              prior = prior,
-                              nsteps = iter.temp,
-                              w = 1,
-                              lower = rep(0,length(argnames(con.lik))),
-                              print.every=5)
-    # get values for w # TODO just do this first time through
-    w <- NULL
-    w <- diff(sapply(temp[11:20, 2:(length(argnames(con.lik))+1)], quantile, c(.05, .95)))
-    # run MCMC
-    results[[i]] <-  diversitree::mcmc(lik = con.lik,
-                                       x.init = runif(min=0, max=1,
-                                                      n=length(argnames(con.lik))),
-                                       nsteps = iter,
-                                       w = w,
-                                       prior = prior,
-                                       lower = rep(0,length(argnames(con.lik))),
-                                       print.every=print.every)
-    
-  }
-  end_time <- as.numeric(Sys.time())
-  print(paste("run time =",  round(end_time - start_time,0), "seconds"))
-  return(results)
-}
-
-# This function will calculate empirical p value 
+# This function will calculate empirical p value ----
 empiricalPcalc <- function(empPostburnin = NULL,
-                           simPostburnin = NULL,
-                           polyploidy = F,
-                           nsim = 100,
+                           simMCMC = NULL,
+                           polyploidy = NULL,
+                           iter = NULL,
+                           nsim = NULL,
+                           burn = NULL,
                            plot = F){
   
   empMeanASC <- mean(empPostburnin$asc1 - empPostburnin$asc2)
@@ -269,19 +145,26 @@ empiricalPcalc <- function(empPostburnin = NULL,
   if(polyploidy == T){
     empMeanPOL <- empPostburnin$pol1 - empPostburnin$pol2
   }
-  
   # calculate Delta R of each simulation
   Delta.R <- as.data.frame(matrix(data = NA, 
                                   nrow = nsim,
                                   ncol = 4))
   colnames(Delta.R) <- c("asc", "desc", "comb", "pol")
-  # this will be used to get the post burnin from each MCMC run
-  pb.seq <- seq(from = 1, to = 5000, by = 50)
+  # calculate empirical P
   for(i in 1:nsim){
-    pbrnASC1 <- simPostburnin$asc1[pb.seq[i]:(pb.seq[i]+49)]
-    pbrnASC2 <- simPostburnin$asc2[pb.seq[i]:(pb.seq[i]+49)]
-    pbrnDESC1 <- simPostburnin$desc1[pb.seq[i]:(pb.seq[i]+49)]
-    pbrnDESC2 <- simPostburnin$desc2[pb.seq[i]:(pb.seq[i]+49)]
+    # get post burnin
+    if(is.data.frame(simMCMC) == T){
+      simPostburnin <- getPostBurnin(data = simMCMC,
+                                     burn = burn)
+    }else{
+      simPostburnin <- getPostBurnin(data = simMCMC[[i]],
+                                     burn = burn)
+    }
+    # isolate post burnin of each rate class
+    pbrnASC1 <- simPostburnin$asc1
+    pbrnASC2 <- simPostburnin$asc2
+    pbrnDESC1 <- simPostburnin$desc1
+    pbrnDESC2 <- simPostburnin$desc2
     pbrnCOMB1 <- (pbrnASC1 + pbrnDESC1) /2
     pbrnCOMB2 <- (pbrnASC2 + pbrnDESC2) /2
     
@@ -291,8 +174,8 @@ empiricalPcalc <- function(empPostburnin = NULL,
     
     
     if(polyploidy == T){
-      pbrnPOL1 <- simPostburnin$pol1[pb.seq[i]:(pb.seq[i]+49)]
-      pbrnPOL2 <- simPostburnin$pol1[pb.seq[i]:(pb.seq[i]+49)]
+      pbrnPOL1 <- simPostburnin$pol1
+      pbrnPOL2 <- simPostburnin$pol1
       Delta.R$pol[i] <- mean(abs(pbrnPOL1 - pbrnPOL2))
     }  
   }
@@ -609,3 +492,171 @@ HPDcalc <- function(empPostburnin = NULL,
   #   
 }
 
+
+#### modified emperical p function ####
+# for a given tree and run chromeplus on that 
+
+getEmpiricalP <- function(tree = NULL, 
+                          chroms = NULL,
+                          rng = NULL,
+                          root.exp = NULL,
+                          binary = NULL,
+                          data = NULL,
+                          nsim = NULL,
+                          root = NULL,
+                          args.lik = list(control = "ode",
+                                          strict = F),
+                          args.conlik = list(hyper = T,
+                                             polyploidy = F,
+                                             verbose = F,
+                                             oneway = F,
+                                             drop.poly=T,
+                                             drop.demi=T,
+                                             symmetric=F,
+                                             nometa=F,
+                                             meta="ARD"),
+                          args.root = list(pi = "fitzjohn"),
+                          args.MCMC = list(iter.temp = 20,
+                                           iter = 100,
+                                           prior = make.prior.exponential(r = .5),
+                                           print.every=50),
+                          burn = 0.5,
+                          plot.lik = F,
+                          plot.p = F){
+  # run time complete script
+  start_time_script <- as.numeric(Sys.time())
+  
+  #### checks ####
+  #### checks ####
+  
+  #### ChromPlus ####
+  # make a place holder to store ChromPlus output
+  results <- vector(mode = "list",
+                    length = nsim)
+  # get Q matrix for binary state transitions
+  Qmat <- matrix(data = 0, nrow = 2, ncol = 2)
+  colnames(Qmat) <- rownames(Qmat) <- c(0,1)
+  Qmat[1,2] <- mean(data$tran12)
+  Qmat[2,1] <- mean(data$tran21)
+  diag(Qmat) <- -rowSums(Qmat)
+  # get the root probabilities of the binary trait
+  root <- fitMk(tree = tree, 
+                x = binary,
+                fixedQ = Qmat,
+                pi = args.root$pi)
+  # simulate binary trait and run MCMC
+  for(i in 1:nsim){
+    # run time MCMC
+    start_time_MCMC <- as.numeric(Sys.time())
+    print(paste("simulation", i))
+    check <- F
+    while(check == F){
+      # simulate binary traits
+      sim.bin <- NULL
+      sim.bin <- sim.character(tree = tree,
+                               pars = Qmat,
+                               model = "mkn",
+                               x0 = as.numeric(sample(names(root$pi),
+                                                      1,
+                                                      prob = root$pi))+1)
+      # change simulated binary characters back to zeros and ones
+      sim.bin[sim.bin == 1] <- 0
+      sim.bin[sim.bin == 2] <- 1
+      if(sum(sim.bin) >= (length(sim.bin)*0.10) &
+         sum(sim.bin) <= (length(sim.bin)*0.90)){
+        check <- T
+      }
+    }
+    # make the initial data frame
+    MCMC.dat <- NULL
+    MCMC.dat <-  data.frame(species = tree$tip.label,
+                            chroms = chroms,
+                            bin = sim.bin,
+                            stringsAsFactors = F,
+                            row.names = NULL)
+    # get the range of chromosome number
+    rng <- NULL
+    rng <- c(range(MCMC.dat$chroms, na.rm = T)[1] - 1,
+             range(MCMC.dat$chroms, na.rm = T)[2] + 1)
+    # convert the data frame to diversitree usable format
+    chrom.mat <- NULL
+    chrom.mat <- chromePlus::datatoMatrix(x = MCMC.dat,
+                                          range = rng,
+                                          hyper = args.conlik$hyper)
+    
+    # make the likelihood function
+    lik <- NULL
+    lik <- diversitree::make.mkn(tree = tree,
+                                 states = chrom.mat,
+                                 k = ncol(chrom.mat),
+                                 strict = F,
+                                 control = list(method="ode"))
+    # constrain the likelihood function
+    con.lik <- NULL
+    con.lik <- chromePlus::constrainMkn(data = chrom.mat,
+                                        lik = lik,
+                                        hyper = args.conlik$hyper,
+                                        polyploidy = args.conlik$polyploidy,
+                                        verbose = args.conlik$verbose,
+                                        oneway = args.conlik$oneway,
+                                        constrain = list(drop.poly=args.conlik$drop.poly,
+                                                         drop.demi=args.conlik$drop.demi,
+                                                         symmetric = args.conlik$symmetric,
+                                                         nometa = args.conlik$nometa,
+                                                         meta = args.conlik$meta))
+    
+    # run the initial MCMC to get parameter values for w (only once)
+    if(i == 1){
+      temp <- NULL
+      temp <- diversitree::mcmc(lik = con.lik,
+                                x.init = runif(min=0, max=1,
+                                               n=length(argnames(con.lik))),
+                                prior = args.MCMC$prior,
+                                nsteps = args.MCMC$iter.temp,
+                                w = 1,
+                                lower = rep(0,length(argnames(con.lik))),
+                                print.every=5)
+      # get values for w # TODO just do this first time through
+      w <- NULL
+      w <- diff(sapply(temp[(args.MCMC$iter.temp * 0.5 + 1):args.MCMC$iter.temp,
+                            2:(length(argnames(con.lik))+1)],
+                       quantile,
+                       c(.05, .95)))
+    }
+    # run MCMC
+    results[[i]] <-  diversitree::mcmc(lik = con.lik,
+                                       x.init = runif(min=0, max=1,
+                                                      n=length(argnames(con.lik))),
+                                       nsteps = args.MCMC$iter,
+                                       w = w,
+                                       prior = args.MCMC$prior,
+                                       lower = rep(0,length(argnames(con.lik))),
+                                       print.every=args.MCMC$print.every)
+    # print run time MCMC
+    end_time_MCMC <- as.numeric(Sys.time())
+    print(paste("run time MCMC =",  round(end_time_MCMC - start_time_MCMC,0), "seconds"))
+  }
+  if(nsim == 1){
+    results <- results[[1]]
+  }
+  # plot likelihoods of the results
+  if(plot.lik == T){
+    plotlikMCMC(data = results, burn = burn)
+  }
+  #### End of ChromPlus ####
+  
+  #### calculation of empirical p value ####
+  empP <- empiricalPcalc(empPostburnin = data,
+                         simMCMC = results,
+                         polyploidy = !args.conlik$drop.poly,
+                         nsim = nsim,
+                         plot = plot.p)
+  # run time complete script
+  end_time_script <- as.numeric(Sys.time())
+  print(paste("run time Total =",  round(end_time_script - start_time_script,0), "seconds"))
+
+  finalResults <- list(MCMC = results,
+                       empiricalP = empP)
+  
+  return(finalResults)
+}

@@ -10,33 +10,21 @@ load("simData.RData")
 load("cond.1.nTips50.rr1.RData")
 # get post burnin of emperical data
 pbrn <- getPostBurnin(results, burn = 0.5)
-# get the transistion matrix
-tmat <- matrix(data = 0, nrow = 2, ncol = 2)
-colnames(tmat) <- rownames(tmat) <- c(0,1)
-# fill tmat
-tmat[1,2] <- mean(pbrn$tran12[1:50])
-tmat[2,1] <- mean(pbrn$tran21[1:50])
-diag(tmat) <- -rowSums(tmat)
 # run MCMC
-res <- simBinMCMC(tree = trees$nTips50[[1]],
+res <- getEmpiricalP(tree = trees$nTips50[[1]],
            chroms = simDat$cond.1$chroms$nTips50$rr1$tree1,
-           binary = simDat$cond.1$binary$nTips50$rr1$tree1,tmat = tmat,
-           nsim = 10,
-           hyper = T,
-           polyploidy = F,
-           verbose = F,
-           oneway = F,
-           drop.poly = T,
-           drop.demi = T,
-           iter.temp = 20,
-           iter = 100)
+           binary = simDat$cond.1$binary$nTips50$rr1$tree1,
+           data = pbrn[1:50,],
+           nsim = 2,
+           plot.lik = T,
+           plot.p = T)
 #Plot MCMC
 plotlikMCMC(res,0.5)
 # get post burnin of MCMC
 simpb <-  getPostBurnin(res, 0.5)
 # calculate emperical P
 empiricalPcalc(empPostburnin = pbrn[1:50,],
-               simPostburnin = simpb,
+               simPostburnin = res$MCMC,
                polyploidy = F,
-               nsim = 10,
+               nsim = 1,
                plot = T)
