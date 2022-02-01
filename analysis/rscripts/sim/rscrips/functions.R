@@ -1,17 +1,22 @@
-# This function will perform the MCMC ----
+# This function will perform the ChromPlus analysis on empirical data ----
 runMCMC <- function(tree = NULL,
                     chroms = NULL,
                     binary = NULL,
-                    hyper = T,
-                    polyploidy = F,
-                    verbose = F,
-                    oneway = F,
-                    drop.poly=T,
-                    drop.demi=T,
-                    iter.temp = 20,
-                    iter = 100,
-                    prior = make.prior.exponential(r = .5),
-                    print.every=50){
+                    args.lik = list(control = "ode",
+                                    strict = F),
+                    args.conlik = list(hyper = T,
+                                       polyploidy = F,
+                                       verbose = F,
+                                       oneway = F,
+                                       drop.poly=T,
+                                       drop.demi=T,
+                                       symmetric=F,
+                                       nometa=F,
+                                       meta="ARD"),
+                    args.MCMC = list(iter.temp = 20,
+                                     iter = 100,
+                                     prior = make.prior.exponential(r = .5),
+                                     print.every=50)){
   # run time
   start_time <- as.numeric(Sys.time())
   # make initial data frame
@@ -26,39 +31,41 @@ runMCMC <- function(tree = NULL,
   rng <- c(range(MCMC.dat$Chroms, na.rm = T)[1] - 1,
            range(MCMC.dat$Chroms, na.rm = T)[2] + 1)
   # convert the data frame to diversitree usable format
+  # convert the data frame to diversitree usable format
   chrom.mat <- NULL
-  chrom.mat <- datatoMatrix(x = MCMC.dat,
-                            range = rng,
-                            hyper = hyper)
-  
+  chrom.mat <- chromePlus::datatoMatrix(x = MCMC.dat,
+                                        range = rng,
+                                        hyper = args.conlik$hyper)
   # make the likelihood function
   lik <- NULL
-  lik <- make.mkn(tree = tree,
-                  states = chrom.mat,
-                  k = ncol(chrom.mat),
-                  strict = F,
-                  control = list(method="ode"))
+  lik <- diversitree::make.mkn(tree = tree,
+                               states = chrom.mat,
+                               k = ncol(chrom.mat),
+                               strict = F,
+                               control = list(method=args.lik$control))
   # constrain the likelihood function
   con.lik <- NULL
-  con.lik <- constrainMkn(data = chrom.mat,
-                          lik = lik,
-                          hyper = hyper,
-                          polyploidy = polyploidy,
-                          verbose = verbose,
-                          oneway = oneway,
-                          constrain = list(drop.poly=drop.poly,
-                                           drop.demi=drop.demi))
-  
+  con.lik <- chromePlus::constrainMkn(data = chrom.mat,
+                                      lik = lik,
+                                      hyper = args.conlik$hyper,
+                                      polyploidy = args.conlik$polyploidy,
+                                      verbose = args.conlik$verbose,
+                                      oneway = args.conlik$oneway,
+                                      constrain = list(drop.poly=args.conlik$drop.poly,
+                                                       drop.demi=args.conlik$drop.demi,
+                                                       symmetric = args.conlik$symmetric,
+                                                       nometa = args.conlik$nometa,
+                                                       meta = args.conlik$meta))
   # run the initial MCMC to get parameter values for w
   temp <- NULL
   temp <- diversitree::mcmc(lik = con.lik,
                             x.init = runif(min=0, max=1,
                                            n=length(argnames(con.lik))),
-                            prior = prior,
-                            nsteps = iter.temp,
+                            prior = args.MCMC$prior,
+                            nsteps = args.MCMC$iter.temp,
                             w = 1,
                             lower = rep(0,length(argnames(con.lik))),
-                            print.every = 5)
+                            print.every=5)
   # get values for w
   w <- NULL
   w <- diff(sapply(temp[11:20, 2:(length(argnames(con.lik))+1)], quantile, c(.05, .95)))
@@ -67,13 +74,13 @@ runMCMC <- function(tree = NULL,
   results <- diversitree::mcmc(lik = con.lik,
                                x.init = runif(min=0, max=1,
                                               n=length(argnames(con.lik))),
-                               nsteps = iter,
+                               nsteps = args.MCMC$iter,
                                w = w,
-                               prior = prior,
+                               prior = args.MCMC$prior,
                                lower = rep(0,length(argnames(con.lik))),
-                               print.every = print.every)
+                               print.every=args.MCMC$print.every)
   end_time <- as.numeric(Sys.time())
-  print(paste("run time =",  round(end_time - start_time,0), "seconds"))
+  print(paste("run time MCMC =",  round(end_time - start_time,0), "seconds"))
   return(results)
 }
 
@@ -137,11 +144,10 @@ empiricalPcalc <- function(empPostburnin = NULL,
                            nsim = NULL,
                            burn = NULL,
                            plot = F){
-  
+  # get mean rate of empirical data
   empMeanASC <- mean(empPostburnin$asc1 - empPostburnin$asc2)
   empMeanDESC <-mean(empPostburnin$desc1 - empPostburnin$desc2)
   empMeanCOMB <- mean(((empPostburnin$asc1 + empPostburnin$desc1) / 2) - ((empPostburnin$asc2 + empPostburnin$desc2) / 2))
-  
   if(polyploidy == T){
     empMeanPOL <- empPostburnin$pol1 - empPostburnin$pol2
   }
@@ -167,12 +173,10 @@ empiricalPcalc <- function(empPostburnin = NULL,
     pbrnDESC2 <- simPostburnin$desc2
     pbrnCOMB1 <- (pbrnASC1 + pbrnDESC1) /2
     pbrnCOMB2 <- (pbrnASC2 + pbrnDESC2) /2
-    
+    # fill in DeltaR table
     Delta.R$asc[i] <- mean(abs(pbrnASC1 - pbrnASC2))
     Delta.R$desc[i] <- mean(abs(pbrnDESC1 - pbrnDESC2))
     Delta.R$comb[i] <- mean(abs(pbrnCOMB1 - pbrnCOMB2))
-    
-    
     if(polyploidy == T){
       pbrnPOL1 <- simPostburnin$pol1
       pbrnPOL2 <- simPostburnin$pol1
@@ -182,98 +186,54 @@ empiricalPcalc <- function(empPostburnin = NULL,
   empericalPFission <- sum(Delta.R$asc > abs(empMeanASC)) / nsim
   empericalPFusion <- sum(Delta.R$desc > abs(empMeanDESC)) / nsim
   empericalPCombined <- sum(Delta.R$comb > abs(empMeanCOMB)) / nsim
-  
+  # print emperical p values
   print(paste("Emperical P value of Fusions:", empericalPFusion))
   print(paste("Emperical P value of Fissions:", empericalPFission))
   print(paste("Emperical P value of Combined aneuploidy:", empericalPCombined))
-  
   if(polyploidy == T){
     empericalPPolyploidy <- sum(Delta.R$pol > abs(empMeanPOL))
     print(paste("Emperical P value of Polyploidy:", empericalPPolyploidy))
   }
-  
+  # get densities
+  DensAsc <- density(Delta.R$asc)
+  DensDesc <- density(Delta.R$desc)
+  DensAnu <- density(Delta.R$comb)
   if(plot == T){
     par(mfcol = c(1,3))
     if(polyploidy == T){
       par(mfcol = c(1,4))
     }
     # fission
-    hist(Delta.R$asc,
-         xlab = expression(paste("| ",Delta, "R"[Fission]," |")),
-         main = "",
-         breaks = 25,
-         cex.lab = 1.5,
-         lwd = 2,
-         xlim  = c(0, max(c(Delta.R$asc,abs(empMeanASC)))))
-    abline(v = mean(abs(empMeanASC)),
-           col = "red",
-           lwd = 2)
-    mtext(text = "A",
-          line = 0,
-          outer = F,
-          side = 3,
-          adj = 0,
-          cex = 1)
-    
+    plot(DensAsc, xlab = expression(paste("| ",Delta, "R"[Fission]," |")),
+         main = "", cex.lab = 1.5, xlim  = c(0, max(c(DensAsc$x,abs(empMeanASC)))),
+         lwd = 2)
+    abline(v = mean(abs(empMeanASC)), col = "red", lwd = 2)
+    mtext(text = "A", line = 0, outer = F, side = 3, adj = 0, cex = 1)
     # fusion
-    hist(Delta.R$desc,
-         xlab = expression(paste("| ",Delta, "R"[Fusion]," |")),
-         main = "",
-         breaks = 25,
-         cex.lab = 1.5,
-         lwd = 2,
-         xlim  = c(0, max(c(Delta.R$desc,abs(empMeanDESC)))))
-    abline(v = mean(abs(empMeanDESC)),
-           col = "red",
-           lwd = 2)
-    mtext(text = "B",
-          line = 0,
-          outer = F,
-          side = 3,
-          adj = 0,
-          cex = 1)
-    
+    plot(DensDesc, xlab = expression(paste("| ",Delta, "R"[Fusion]," |")),
+         main = "", cex.lab = 1.5, 
+         xlim  = c(0, max(c(DensDesc$x,abs(empMeanDESC)))), lwd = 2)
+    abline(v = mean(abs(empMeanDESC)), col = "red", lwd = 2)
+    mtext(text = "B", line = 0, outer = F, side = 3, adj = 0, cex = 1)
     # Combined aneuploidy
-    hist(Delta.R$comb,
-         xlab = expression(paste("| ",Delta, "R"[Aneuploidy]," |")),
-         main = "",
-         breaks = 25,
-         cex.lab = 1.5,
-         lwd = 2,
-         xlim  = c(0, max(c(Delta.R$comb,abs(empMeanCOMB)))))
-    abline(v = mean(abs(empMeanCOMB)),
-           col = "red",
-           lwd = 2)
-    mtext(text = "C",
-          line = 0,
-          outer = F,
-          side = 3,
-          adj = 0,
-          cex = 1)
-    
+    plot(DensAnu, xlab = expression(paste("| ",Delta, "R"[Aneuploidy]," |")),
+         main = "", cex.lab = 1.5,
+         xlim  = c(0, max(c(DensAnu$x,abs(empMeanCOMB)))), lwd = 2)
+    abline(v = mean(abs(empMeanCOMB)), col = "red", lwd = 2)
+    mtext(text = "C", line = 0, outer = F, side = 3, adj = 0, cex = 1)
     if(polyploidy == T){
-      # Combined Polyploidy
-      hist(Delta.R$pol,
-           xlab = expression(paste("| ",Delta, "R"[polyploidy]," |")),
-           main = "",
-           breaks = 25,
-           cex.lab = 1.5,
+      DensPol <- density(Delta.R$pol)
+      plot(DensPol, xlab = expression(paste("| ",Delta, "R"[polyploidy]," |")),
+           main = "", cex.lab = 1.5, xlim  = c(0, max(c(DensPol$x,abs(empMeanPOL)))),
            lwd = 2)
-      abline(v = mean(abs(empMeanPOL)),
-             col = "red",
-             lwd = 2)
-      mtext(text = "D",
-            line = 0,
-            outer = F,
-            side = 3,
-            adj = 0,
-            cex = 1)
+      abline(v = mean(abs(empMeanPOL)), col = "red", lwd = 2)
+      mtext(text = "D", line = 0, outer = F, side = 3, adj = 0, cex = 1)
     }
   }
+  # get p values
   Pvalues <-  list(EmpPvalueFusion = empericalPFusion,
                    EmpPvalueFission = empericalPFission,
                    EmpPvalueAneuploidy = empericalPCombined)
-  
   if(polyploidy == T){
     Pvalues <-  list(EmpPvalueFusion = empericalPFusion,
                      EmpPvalueFission = empericalPFission,
@@ -292,13 +252,11 @@ HPDcalc <- function(empPostburnin = NULL,
   HPD.fusions <- vector(mode = "numeric", length = nsim)
   HPD.fissions <- vector(mode = "numeric", length = nsim)
   HPD.combined <- vector(mode = "numeric", length = nsim)
-  
+  #### work on this line 
   # this will be used to get the post burnin from each MCMC run
   pb.seq <- seq(from = 1, to = 5000, by = 50)
-  
   # fill in data
   for(i in 1:nsim){
-    
     # get data 
     empASC1 <- empPostburnin$asc1[pb.seq[i]:(pb.seq[i]+49)]
     empASC2 <- empPostburnin$asc2[pb.seq[i]:(pb.seq[i]+49)]
@@ -306,12 +264,10 @@ HPDcalc <- function(empPostburnin = NULL,
     empDESC2 <- empPostburnin$desc2[pb.seq[i]:(pb.seq[i]+49)]
     empCOMB1 <- (empPostburnin$asc1[pb.seq[i]:(pb.seq[i]+49)] + empPostburnin$desc1[pb.seq[i]:(pb.seq[i]+49)]) /2
     empCOMB2 <- (empPostburnin$asc2[pb.seq[i]:(pb.seq[i]+49)] + empPostburnin$desc2[pb.seq[i]:(pb.seq[i]+49)]) /2
-    
     # calculate HPD
     HPDasc <- HPDinterval(as.mcmc(empASC1 - empASC2))
     HPDdesc <- HPDinterval(as.mcmc(empDESC1 - empDESC2))
     HPDcomb <- HPDinterval(as.mcmc(empCOMB1 - empCOMB2))
-    
     # calculate number of times HPD passes zero
     #fission
     if(HPDasc[1] < 0 & HPDasc[2] > 0){
@@ -333,7 +289,6 @@ HPDcalc <- function(empPostburnin = NULL,
     }
     # polyploidy
     if(polyploidy == T){
-      
       HPD.polyploidy <- vector(mode = "numeric", length = nsim)
       #get data
       empPOL1 <- empPostburnin$asc1[pb.seq[i]:(pb.seq[i]+49)]
@@ -352,150 +307,15 @@ HPDcalc <- function(empPostburnin = NULL,
   print(paste("Proportion of significant results for fissions:", sum(HPD.fissions)/ nsim))
   print(paste("Proportion of significant results for fusions:", sum(HPD.fusions)/ nsim))
   print(paste("Proportion of significant results for aneuploidy:", sum(HPD.combined)/ nsim))
-  
+  # get results
   results <- list(sigFission = sum(HPD.fissions)/ nsim,
                   sigFusion = sum(HPD.fusions)/ nsim,
                   sigAneuploidy =  sum(HPD.combined)/ nsim)
   return(results)
-  
-  # sum(HPD.tab.fissions$`pass-zero`)
-  
-  # # plot data
-  # par(mfrow = c(2,3))
-  # #set colours and point types
-  # col <- viridis::viridis(3, alpha = 0.5, end = 0.8)
-  # 
-  # ## Type I error rate Fission
-  # plot(x = NULL,
-  #      y = NULL,
-  #      xlim = c(50,250),
-  #      ylim = c(0,0.1),
-  #      ylab = "Type I error rate",
-  #      xlab = "Number of tips",
-  #      main = "Fission") 
-  # 
-  # for(i in 1:3){
-  #   # plot condition 2
-  #   lines(x = Sigtab$ntip[Sigtab$rr == sort(unique(Sigtab$rr))[i]],
-  #         y = Sigtab$FissionSignificance[Sigtab$rr == sort(unique(Sigtab$rr))[i]],
-  #         pch = 16,
-  #         type = "o", lwd = 2,
-  #         col = col[i])
-  #   
-  # }
-  # # add 0.05 p value cut off
-  # abline(h = 0.05, col = "red", lty = 2)
-  # 
-  # ## Type I error rate Fusion
-  # plot(x = NULL,
-  #      y = NULL,
-  #      xlim = c(50,250),
-  #      ylim = c(0,0.1),
-  #      ylab = "Type I error rate",
-  #      xlab = "Number of tips",
-  #      main = "Fusion") 
-  # 
-  # for(i in 1:3){
-  #   # plot condition 2
-  #   lines(x = Sigtab$ntip[Sigtab$rr == sort(unique(Sigtab$rr))[i]],
-  #         y = Sigtab$FusionSignificance[Sigtab$rr == sort(unique(Sigtab$rr))[i]],
-  #         pch = 16,
-  #         type = "o", lwd = 2,
-  #         col = col[i])
-  #   
-  # }
-  # # add 0.05 p value cut off
-  # abline(h = 0.05, col = "red", lty = 2)
-  # 
-  # ## Type I error rate MeanRateCombined
-  # plot(x = NULL,
-  #      y = NULL,
-  #      xlim = c(50,250),
-  #      ylim = c(0,0.1),
-  #      ylab = "Type I error rate",
-  #      xlab = "Number of tips",
-  #      main = "Combination") 
-  # 
-  # for(i in 1:3){
-  #   # plot condition 2
-  #   lines(x = Sigtab$ntip[Sigtab$rr == sort(unique(Sigtab$rr))[i]],
-  #         y = Sigtab$MeanRateSignificance[Sigtab$rr == sort(unique(Sigtab$rr))[i]],
-  #         pch = 16,
-  #         type = "o", lwd = 2,
-  #         col = col[i])
-  #   
-  # }
-  # # add legend
-  # legend("topleft",inset=.02,
-  #        legend=c("2",
-  #                 "5",
-  #                 "10"),
-  #        col=col, 
-  #        lty=1,
-  #        cex=1,
-  #        lwd = 2,title = "Rates ratio")
-  # 
-  # # add 0.05 p value cut off
-  # abline(h = 0.05, col = "red", lty = 2)
-  # 
-  # ## Type II error rate fission
-  # plot(x = NULL,
-  #      y = NULL,
-  #      xlim = c(50,250),
-  #      ylim = c(0,1),
-  #      ylab = "Type II error rate",
-  #      xlab = "Number of tips") 
-  # 
-  # for(i in 1:3){
-  #   # plot condition 2
-  #   lines(x = Ptab$ntip[Ptab$rr == sort(unique(Ptab$rr))[i]],
-  #         y = Ptab$FissionSignificance[Ptab$rr == sort(unique(Ptab$rr))[i]],
-  #         pch = 16,
-  #         type = "o", lwd = 2,
-  #         col = col[i])
-  #   
-  # }
-  # 
-  # ## Type II error rate fusion
-  # plot(x = NULL,
-  #      y = NULL,
-  #      xlim = c(50,250),
-  #      ylim = c(0,1),
-  #      ylab = "Type II error rate",
-  #      xlab = "Number of tips") 
-  # 
-  # for(i in 1:3){
-  #   # plot condition 2
-  #   lines(x = Ptab$ntip[Ptab$rr == sort(unique(Ptab$rr))[i]],
-  #         y = Ptab$FusionSignificance[Ptab$rr == sort(unique(Ptab$rr))[i]],
-  #         pch = 16,
-  #         type = "o", lwd = 2,
-  #         col = col[i])
-  #   
-  # }
-  # 
-  # ## Type II error rate MeanRateCombined
-  # plot(x = NULL,
-  #      y = NULL,
-  #      xlim = c(50,250),
-  #      ylim = c(0,1),
-  #      ylab = "Type II error rate",
-  #      xlab = "Number of tips") 
-  # 
-  # for(i in 1:3){
-  #   # plot condition 2
-  #   lines(x = Ptab$ntip[Ptab$rr == sort(unique(Ptab$rr))[i]],
-  #         y = Ptab$MeanRateSignificance[Ptab$rr == sort(unique(Ptab$rr))[i]],
-  #         pch = 16,
-  #         type = "o", lwd = 2,
-  #         col = col[i])
-  #   
 }
 
-
-#### modified emperical p function ####
+# This function will calculate emperical p value ----
 # for a given tree and run chromeplus on that 
-
 getEmpiricalP <- function(tree = NULL, 
                           chroms = NULL,
                           rng = NULL,
@@ -525,10 +345,8 @@ getEmpiricalP <- function(tree = NULL,
                           plot.p = F){
   # run time complete script
   start_time_script <- as.numeric(Sys.time())
-  
   #### checks ####
   #### checks ####
-  
   #### ChromPlus ####
   # make a place holder to store ChromPlus output
   results <- vector(mode = "list",
@@ -583,7 +401,6 @@ getEmpiricalP <- function(tree = NULL,
     chrom.mat <- chromePlus::datatoMatrix(x = MCMC.dat,
                                           range = rng,
                                           hyper = args.conlik$hyper)
-    
     # make the likelihood function
     lik <- NULL
     lik <- diversitree::make.mkn(tree = tree,
@@ -604,7 +421,6 @@ getEmpiricalP <- function(tree = NULL,
                                                          symmetric = args.conlik$symmetric,
                                                          nometa = args.conlik$nometa,
                                                          meta = args.conlik$meta))
-    
     # run the initial MCMC to get parameter values for w (only once)
     if(i == 1){
       temp <- NULL
@@ -644,7 +460,6 @@ getEmpiricalP <- function(tree = NULL,
     plotlikMCMC(data = results, burn = burn)
   }
   #### End of ChromPlus ####
-  
   #### calculation of empirical p value ####
   empP <- empiricalPcalc(empPostburnin = data,
                          simMCMC = results,
@@ -655,9 +470,8 @@ getEmpiricalP <- function(tree = NULL,
   # run time complete script
   end_time_script <- as.numeric(Sys.time())
   print(paste("run time Total =",  round(end_time_script - start_time_script,0), "seconds"))
-
+  # get results
   finalResults <- list(MCMC = results,
                        empiricalP = empP)
-  
   return(finalResults)
 }

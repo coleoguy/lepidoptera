@@ -7,14 +7,14 @@ library(chromePlus)
 source("functions.R")
 # load data
 load("simData.RData")
-load("cond.1.nTips50.rr1.RData")
+load("cond.1.nTips50.rr10.RData")
 # get post burnin of emperical data
 pbrn <- getPostBurnin(results, burn = 0.5)
 # run MCMC
 res <- getEmpiricalP(tree = trees$nTips50[[1]],
-           chroms = simDat$cond.1$chroms$nTips50$rr1$tree1,
-           binary = simDat$cond.1$binary$nTips50$rr1$tree1,
+           chroms = simDat$cond.1$chroms$nTips50$rr10$tree1,
+           binary = simDat$cond.1$binary$nTips50$rr10$tree1,
            data = pbrn[1:50,],
-           nsim = 1,
+           nsim = 100,
            plot.lik = T,
            plot.p = T)
