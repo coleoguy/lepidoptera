@@ -70,19 +70,19 @@ rm(rr1,rr2,rr5,rr10,
    cond.1,cond.2,cond.3)
 
 # cycle through tree sizes
-for(i in 1:length(simDat)){ # access conditions
-  for(ii in 1:length(simDat[[1]][[1]])){ # access ntips
+for(i in 1:length(simDat)){                      # access conditions
+  for(ii in 1:length(simDat[[1]][[1]])){         # access ntips
     for(iii in 1:length(simDat[[1]][[1]][[1]])){ # access rr
-      for(iiii in 1:100){ # access each tree
+      for(iiii in 1:100){                        # access each tree
         check <- F
         if(i == 1){ # simulate data for condition 1
           while(check==F){
             z <- NULL
             z <- simChrom(trees[[ii]][[iiii]], 
-                          pars=c(.75,     # gains at state 0
-                                 rr[iii]*.75,   # gains at state 1
-                                 .75,     # loss at state 0
-                                 rr[iii]*.75,   # loss at state 1
+                          pars=c(.75,         # gains at state 0
+                                 rr[iii]*.75, # gains at state 1
+                                 .75,         # loss at state 0
+                                 rr[iii]*.75, # loss at state 1
                                  0,       # demiploidy at state 0
                                  0,       # demiploidy at state 1
                                  0,       # polyploidy at state 0
@@ -132,7 +132,7 @@ for(i in 1:length(simDat)){ # access conditions
         if(i == 3){ # simulate data for condition 3
           # randomly sample a tip 
           rTip <- NULL
-          rTip <- sample(Ntip(trees[[ii]][[iiii]]),1)
+          rTip <- sample(Ntip(trees[[ii]][[iiii]]),10, replace = F)
           # get the tree for simulating data
           sim.tree <- NULL
           sim.tree <- trees[[ii]][[iiii]]

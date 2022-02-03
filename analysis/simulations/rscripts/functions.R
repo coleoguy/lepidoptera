@@ -1,3 +1,26 @@
+# this function will simulate a set of birth death trees ----
+simTrees <- function(ntaxa = NULL,
+                     ntrees = NULL,
+                     birth = NULL,
+                     death = NULL){
+  trees <- list()
+  for(i in 1:length(ntaxa)){
+    tree.set <- list()
+    for(j in 1:ntrees){
+      tree <- NULL
+      while(is.null(tree)){
+        tree <- tree.bd(pars = c(birth, death), max.taxa = ntaxa[i])
+      }
+      tree$edge.length <- tree$edge.length/max(branching.times(tree))
+      tree.set[[j]] <- tree
+    }
+    names(tree.set) <- paste("tree", 1:ntrees, sep = "")
+    trees[[i]] <- tree.set 
+  }
+  # name each set in trees
+  names(trees) <- paste("nTips",ntaxa, sep = "") 
+  return(trees)
+}
 # This function will perform the ChromPlus analysis on empirical data ----
 runMCMC <- function(tree = NULL,
                     chroms = NULL,
