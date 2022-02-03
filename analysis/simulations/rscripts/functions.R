@@ -268,26 +268,30 @@ empiricalPcalc <- function(empPostburnin = NULL,
 } 
 
 # This function will calculate HPD intervals ----
-HPDcalc <- function(empPostburnin = NULL,
+HPDcalc <- function(MCMC = NULL,
                     polyploidy = F,
                     nsim = 100,
-                    plot = F){
+                    plot = F,
+                    burn = NULL){
   # make a table to get the HPD intervals for each MCMC we did
   HPD.fusions <- vector(mode = "numeric", length = nsim)
   HPD.fissions <- vector(mode = "numeric", length = nsim)
   HPD.combined <- vector(mode = "numeric", length = nsim)
-  #### work on this line 
-  # this will be used to get the post burnin from each MCMC run
-  pb.seq <- seq(from = 1, to = 5000, by = 50)
   # fill in data
   for(i in 1:nsim){
+    # get post burnin
+    if(nsim == 1){
+      empPostburnin <-  getPostBurnin(data = MCMC,burn = burn)
+    }else{
+      empPostburnin <-  getPostBurnin(data = MCMC[[i]],burn = burn)
+    }
     # get data 
-    empASC1 <- empPostburnin$asc1[pb.seq[i]:(pb.seq[i]+49)]
-    empASC2 <- empPostburnin$asc2[pb.seq[i]:(pb.seq[i]+49)]
-    empDESC1 <- empPostburnin$desc1[pb.seq[i]:(pb.seq[i]+49)]
-    empDESC2 <- empPostburnin$desc2[pb.seq[i]:(pb.seq[i]+49)]
-    empCOMB1 <- (empPostburnin$asc1[pb.seq[i]:(pb.seq[i]+49)] + empPostburnin$desc1[pb.seq[i]:(pb.seq[i]+49)]) /2
-    empCOMB2 <- (empPostburnin$asc2[pb.seq[i]:(pb.seq[i]+49)] + empPostburnin$desc2[pb.seq[i]:(pb.seq[i]+49)]) /2
+    empASC1 <- empPostburnin$asc1
+    empASC2 <- empPostburnin$asc2
+    empDESC1 <- empPostburnin$desc1
+    empDESC2 <- empPostburnin$desc2
+    empCOMB1 <- (empPostburnin$asc1 + empPostburnin$desc1) /2
+    empCOMB2 <- (empPostburnin$asc2 + empPostburnin$desc2) /2
     # calculate HPD
     HPDasc <- HPDinterval(as.mcmc(empASC1 - empASC2))
     HPDdesc <- HPDinterval(as.mcmc(empDESC1 - empDESC2))
@@ -315,8 +319,8 @@ HPDcalc <- function(empPostburnin = NULL,
     if(polyploidy == T){
       HPD.polyploidy <- vector(mode = "numeric", length = nsim)
       #get data
-      empPOL1 <- empPostburnin$asc1[pb.seq[i]:(pb.seq[i]+49)]
-      empPOL2 <- empPostburnin$asc2[pb.seq[i]:(pb.seq[i]+49)]
+      empPOL1 <- empPostburnin$asc1
+      empPOL2 <- empPostburnin$asc2
       # calculate HPD
       HPDpol <- HPDinterval(as.mcmc(empASC1 - empASC2))
       # calculate number of times HPD passes zero
