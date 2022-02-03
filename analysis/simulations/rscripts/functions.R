@@ -158,7 +158,6 @@ getPostBurnin <- function(data, burn = NULL){
   }
   return(pbrn)
 }
-
 # This function will calculate empirical p value ----
 empiricalPcalc <- function(empPostburnin = NULL,
                            simMCMC = NULL,
@@ -503,6 +502,7 @@ getEmpiricalP <- function(tree = NULL,
                        empiricalP = empP)
   return(finalResults)
 }
+
 # This function will calculate empirical p value in multicore ----
 # for a given tree and run chromeplus on that 
 getEmpiricalPMC <- function(tree = NULL, 
