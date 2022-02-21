@@ -1,12 +1,12 @@
 # Terrence Sylvester
 # get file names and make data table to store results
-files <- dir("../results/empP-MCMC/tree.12/")
+files <- dir("../results/empP-MCMC/tree.67/")
 dat <- as.data.frame(matrix(data = NA, nrow = length(files),ncol = 4))
 colnames(dat) <- c("run", "fission", "fusion","aneuploidy")
 # get results
 for(i in 1:length(files)){
   # load results
-  load(paste("../results/empP-MCMC/tree.12/", files[i], sep = ""))
+  load(paste("../results/empP-MCMC/tree.67/", files[i], sep = ""))
   dat$run[i] <- files[i]
   dat$fission[i] <- empP$empiricalP$EmpPvalueFission
   dat$fusion[i] <- empP$empiricalP$EmpPvalueFusion

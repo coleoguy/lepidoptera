@@ -42,12 +42,12 @@ for(i in 1:length(simDat)){ # access conditions
                               binary = simDat[[i]][[2]][[ii]][[iii]][[iiii]],
                               data = pbrn,
                               nsim = 100,
-                              plot.lik = T,
-                              plot.p = T,
+                              plot.lik = F,
+                              plot.p = F,
                               nclust = 100,
                               burn = 0.5)
       if(dir.exists(paste("../results/empP-MCMC/tree",iiii, sep=".")) == F){
-        dir.create(paste("../results/empP-MCMC/tree",iiii, sep="."))  
+        dir.create(paste("../results/empP-MCMC/tree",iiii, sep="."),recursive = T)  
       }
       save(empP, file = paste("../results/empP-MCMC/tree.",
                               iiii,

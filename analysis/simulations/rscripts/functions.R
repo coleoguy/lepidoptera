@@ -532,7 +532,8 @@ getEmpiricalPMC <- function(tree = NULL,
                             burn = 0.5,
                             plot.lik = F,
                             plot.p = F,
-                            nclust = 2){
+                            nclust = 2,
+                            prop = NULL){
   # run time complete script
   start_time_script <- as.numeric(Sys.time())
   #### checks ####
@@ -553,6 +554,11 @@ getEmpiricalPMC <- function(tree = NULL,
                 x = binary,
                 fixedQ = Qmat,
                 pi = args.root$pi)
+  # fraction of binary data
+  
+  if(is.null(prop)){
+    prop <- sum(binary)/length(binary)  
+  }
   # simulate binary trait and run MCMC
   results <- foreach(i = 1:nsim, .verbose = T, .packages = c("ape","diversitree", "chromePlus","phytools","maps")) %dopar% {
     # run time MCMC
@@ -571,8 +577,8 @@ getEmpiricalPMC <- function(tree = NULL,
       # change simulated binary characters back to zeros and ones
       sim.bin[sim.bin == 1] <- 0
       sim.bin[sim.bin == 2] <- 1
-      if(sum(sim.bin) >= (length(sim.bin)*0.10) &
-         sum(sim.bin) <= (length(sim.bin)*0.90)){
+      if(sum(sim.bin) >= (length(sim.bin)*prop) &
+         sum(sim.bin) <= (length(sim.bin)*(1-prop))){
         check <- T
       }
     }

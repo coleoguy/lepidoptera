@@ -10,7 +10,7 @@ library(doSNOW)
 # get helper functions
 source("functions.R")
 # load data
-load("simData.RData")
+load("../results/simData/simData.RData")
 # define number of clusters for parallel computing
 NumberOfClusters <- 100
 cl <- makeCluster(NumberOfClusters, outfile = "")
@@ -53,7 +53,13 @@ for(i in 1:length(simDat)){                      # access conditions
                                        print.every=50))
       }
       print(paste(file.name, "complete"))
-      save(results, file = paste(file.name,"RData", sep = "."))
+      if(dir.exists("../results/simData-MCMC") == F){
+        dir.create("../results/simData-MCMC")
+      }
+      save(results, file = paste("../results/simData-MCMC/",
+                                 file.name,
+                                 ".RData",
+                                 sep = ""))
     }
   }
 }

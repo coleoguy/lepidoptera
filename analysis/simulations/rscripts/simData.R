@@ -10,7 +10,8 @@ library(diversitree)
 source("functions.R")
 
 # Build 100 trees of sizes 50,100, and 200 species --------------------
-trees <- simTrees(ntaxa = c(50, 100, 200),
+taxa <- c(50, 100, 200)
+trees <- simTrees(ntaxa = taxa,
                   ntrees = 100,
                   birth = 3,
                   death = 1)
@@ -115,4 +116,7 @@ for(i in 1:length(simDat)){                      # access conditions
 # remove unwanted objects from the environment
 rm(i,ii,iii,iiii,z, check, rTip, sim.tree)
 # save data
-save(simDat,trees, file = "simData.RData")
+if(dir.exists("../results/simData") == F){
+  dir.create("../results/simData")
+}
+save(simDat,trees, file = "../results/simData/simData.RData")
