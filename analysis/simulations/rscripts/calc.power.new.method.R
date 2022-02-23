@@ -46,7 +46,7 @@ x <- foreach(i = 1:nrep, .verbose = T,.packages = c("stringr"))%dopar%{
   dat
 }
 # stop cluster
-stopCluster(Cl)
+stopCluster(cl)
 # combine results from multi threading into a single data frame
 dat <- x[[1]]
 for(i in 2:length(x)){
@@ -57,6 +57,7 @@ dat <- dat[order(dat$tips),]
 # calculate the number of times we get a significant result
 empPower <- as.data.frame(matrix(data = NA, nrow = nfiles, ncol = 7))
 colnames(empPower) <-  c("run", "ntip", "cond", "rr", "fission","fusion", "aneuploidy")
+files <- dir(paste("../results/empP-MCMC/rep-", sample(nrep,1), "/tree-", wtree, sep = "")) 
 for(i in 1:nrow(empPower)){
   empPower$run[i] <- files[i]
   empPower$ntip[i] <- as.numeric(unlist(strsplit(str_replace_all(empPower$run[i], "([A-z])", replacement = ""), split = ".", fixed = T))[3])
@@ -67,5 +68,5 @@ for(i in 1:nrow(empPower)){
   empPower$aneuploidy[i] <- sum(dat$aneuploidy[dat$tips == empPower$ntip[i] &  dat$cond == empPower$cond[i] & dat$rr == empPower$rr[i]] <= 0.05) / nrep
 }
 # save data
-write.csv(dat,"../results/power.new.method.full.tab.csv", row.names = F)
-write.csv(empPower, "../results/power.new.method.csv",row.names = F)
+write.csv(dat,"../results/power.new.method.full.tab.23-rep.csv", row.names = F)
+write.csv(empPower, "../results/power.new.method.23-rep.csv",row.names = F)
